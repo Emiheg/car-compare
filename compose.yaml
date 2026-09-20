@@ -1,0 +1,37 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: car-compare-frontend
+    ports:
+      - "${NEXT_FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      NEXT_PUBLIC_FIREBASE_API_KEY: ${NEXT_PUBLIC_FIREBASE_API_KEY:-local-dev-api-key}
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:-localhost}
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${NEXT_PUBLIC_FIREBASE_PROJECT_ID:-car-compare}
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET:-car-compare.appspot.com}
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID:-local-dev-sender}
+      NEXT_PUBLIC_FIREBASE_APP_ID: ${NEXT_PUBLIC_FIREBASE_APP_ID:-local-dev-app}
+      NEXT_PUBLIC_USE_FIREBASE_EMULATOR: ${NEXT_PUBLIC_USE_FIREBASE_EMULATOR:-true}
+      NEXT_PUBLIC_FIREBASE_EMULATOR_HOST: firebase-emulator:8080
+      SVV_API_KEY: ${SVV_API_KEY:-}
+    env_file:
+      - path: .env.local
+        required: false
+    depends_on:
+      - firebase-emulator
+
+  firebase-emulator:
+    image: evolutecx/firebase-emulator:latest
+    container_name: car_analytics_backend
+    ports:
+      - "${FIREBASE_EMULATOR_UI_PORT:-4000}:4000"
+      - "${FIREBASE_FIRESTORE_PORT:-8080}:8080"
+      - "${FIREBASE_AUTH_PORT:-9099}:9099"
+    environment:
+      - FB_PROJECT_ID=car-compare
