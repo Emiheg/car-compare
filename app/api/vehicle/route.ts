@@ -72,7 +72,8 @@ export async function GET(request: Request) {
   }
 }
 
-// Helper function to determine if the input is a license plate or VIN.   With very old vehicles (<1985) the vin can be shorter and will not be able to be found with current logic
+// Helper function to determine if the input is a license plate or VIN.  
+// Note: With very old vehicles (<1985) the vin can be shorter and in some rare cases will not be able to be found with current logic
 function checkInput(input: string): string {
   const inputType = ['kjennemerke', 'understellsnummer'];
   if (input.length > 7) return inputType[1]; // VIN check
