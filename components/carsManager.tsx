@@ -2,28 +2,33 @@
 
 import { useState } from "react";
 import CarView from "./carView";
+import type { CarData } from "../utils/dataparser";
 
 export default function CarsManager() {
-    const [input, setInput] = useState("");
-    const [result, setResult] = useState("");
-
+    const [input, setInput] = useState("TSMJYB22S00146236");
+    const [result, setResult] = useState<CarData | null>(null);
+    const [error, setError] = useState("");
     async function search() {
+        setError("");
         const response = await fetch(`/api/vehicle?input=${input}`);
         const data = await response.json();
-        setResult(JSON.stringify(data.data ?? data.error));
+        if (data.error) {
+            setError(data.error);
+        } else {
+            setResult(data.data);
+        }
     }
 
     return (
         <div>
-            <h2>Manager</h2>
             <input
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 placeholder="License plate or VIN"
             />
             <button onClick={search}>Search</button>
-            <CarView />
-            {result && <p>{result}</p>}
+            {error && <p style={{ color: "red" }}>{error}</p>}
+            {result && <CarView data={result} />}
         </div>
     );
 }

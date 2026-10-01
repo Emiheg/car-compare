@@ -49,7 +49,10 @@ export async function GET(request: Request) {
     const structuredCarData = {
       plate: targetVehicle.kjoretoyId?.kjennemerke || 'Unknown',
       vin: targetVehicle.kjoretoyId?.understellsnummer || 'Unknown',
-      firstRegisteredNorway: targetVehicle.forstegangsregistrering?.registrertForstegangNorgeDato || null,
+      brand : targetVehicle.godkjenning?.tekniskGodkjenning?.tekniskeData?.generelt?.merke[0].merke || 'Unknown',
+      model: targetVehicle.godkjenning?.tekniskGodkjenning?.tekniskeData?.generelt?.handelsbetegnelse[0] || 'Unknown',
+      color: targetVehicle.godkjenning?.tekniskGodkjenning?.tekniskeData?.karosseriOgLasteplan?.rFarge?.[0]?.kodeNavn || '',
+      firstRegisteredNorway: targetVehicle.forstegangsregistrering?.registrertForstegangNorgeDato || 'Unknown',
       isImported: !!targetVehicle.godkjenning?.forstegangsGodkjenning?.bruktimport?.importland,
       importCountry: targetVehicle.godkjenning?.forstegangsGodkjenning?.bruktimport?.importland?.landNavn || null,
       mileageAtImport: targetVehicle.godkjenning?.forstegangsGodkjenning?.bruktimport?.kilometerstand || 0,
