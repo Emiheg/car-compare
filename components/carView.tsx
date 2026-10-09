@@ -2,6 +2,9 @@ import CarImage from "./carImage";
 import { CarData } from "../utils/dataparser";
 
 export default function CarView({ data }: { data: CarData | null }) {
+  const registrationDate = data?.registreringsdata.forstegangsregistrering.registrertForstegangNorgeDato;
+  const year = typeof registrationDate === "string" ? registrationDate.substring(0, 4) : "Unknown";
+
   return (
     <div>
       {data && <div>
@@ -11,7 +14,7 @@ export default function CarView({ data }: { data: CarData | null }) {
         </div>
         }
         {data && <CarImage 
-          year={data.firstRegisteredNorway.substring(0, 4)} 
+          year={year} 
           brand={data.brand} 
           model={data.model} 
           />}

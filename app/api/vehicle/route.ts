@@ -15,8 +15,11 @@ export async function GET(request: Request) {
     const carSnapshot = await getDoc(carDocRef);
 
     if (carSnapshot.exists()) {
-      console.log(`Cache data retrieved from Firestore for: ${input}`);
-      return NextResponse.json({ source: 'cache', data: carSnapshot.data() });
+      const cachedCar = carSnapshot.data();
+      if (cachedCar.tekniskedata && cachedCar.registreringsdata && cachedCar.godkjenning) {
+        console.log(`Cache data retrieved from Firestore for: ${input}`);
+        return NextResponse.json({ source: 'cache', data: cachedCar });
+      }
     }
 
     console.log(`Cache Miss. Querying Statens Vegvesen API for: ${input}`);
@@ -45,21 +48,20 @@ export async function GET(request: Request) {
     // Safely target the first vehicle object inside the array list
     const targetVehicle = rawSvvData.kjoretoydataListe[0];
 
-    // Restructuring the data nodes into a clean, flat schema
+    // Restructure the response while retaining complete nested data sections
+    const technicalData = targetVehicle.godkjenning?.tekniskGodkjenning?.tekniskeData ?? {};
     const structuredCarData = {
       plate: targetVehicle.kjoretoyId?.kjennemerke || 'Unknown',
       vin: targetVehicle.kjoretoyId?.understellsnummer || 'Unknown',
-      brand : targetVehicle.godkjenning?.tekniskGodkjenning?.tekniskeData?.generelt?.merke[0].merke || 'Unknown',
-      model: targetVehicle.godkjenning?.tekniskGodkjenning?.tekniskeData?.generelt?.handelsbetegnelse[0] || 'Unknown',
-      color: targetVehicle.godkjenning?.tekniskGodkjenning?.tekniskeData?.karosseriOgLasteplan?.rFarge?.[0]?.kodeNavn || '',
-      firstRegisteredNorway: targetVehicle.forstegangsregistrering?.registrertForstegangNorgeDato || 'Unknown',
-      isImported: !!targetVehicle.godkjenning?.forstegangsGodkjenning?.bruktimport?.importland,
-      importCountry: targetVehicle.godkjenning?.forstegangsGodkjenning?.bruktimport?.importland?.landNavn || null,
-      mileageAtImport: targetVehicle.godkjenning?.forstegangsGodkjenning?.bruktimport?.kilometerstand || 0,
-      usageType: targetVehicle.registrering?.kjoringensArt?.kodeBeskrivelse || 'Privat',
-      status: targetVehicle.registrering?.registreringsstatus?.kodeBeskrivelse || 'Aktiv',
-      deregisteredDate: targetVehicle.registrering?.avregistrertSidenDato || null,
-      axleConfiguration: targetVehicle.godkjenning?.tekniskGodkjenning?.tekniskeData?.akslinger?.akselGruppe || [],
+      brand: technicalData.generelt?.merke?.[0]?.merke || 'Unknown',
+      model: technicalData.generelt?.handelsbetegnelse?.[0] || 'Unknown',
+      color: technicalData.karosseriOgLasteplan?.rFarge?.[0]?.kodeNavn || '',
+      tekniskedata: technicalData,
+      registreringsdata: {
+        forstegangsregistrering: targetVehicle.forstegangsregistrering ?? {},
+        registrering: targetVehicle.registrering ?? {},
+      },
+      godkjenning: targetVehicle.godkjenning ?? {},
       cachedAt: new Date().toISOString()
     };
 
