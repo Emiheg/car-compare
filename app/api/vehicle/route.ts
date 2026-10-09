@@ -49,7 +49,10 @@ export async function GET(request: Request) {
     const structuredCarData = {
       plate: targetVehicle.kjoretoyId?.kjennemerke || 'Unknown',
       vin: targetVehicle.kjoretoyId?.understellsnummer || 'Unknown',
-      firstRegisteredNorway: targetVehicle.forstegangsregistrering?.registrertForstegangNorgeDato || null,
+      brand : targetVehicle.godkjenning?.tekniskGodkjenning?.tekniskeData?.generelt?.merke[0].merke || 'Unknown',
+      model: targetVehicle.godkjenning?.tekniskGodkjenning?.tekniskeData?.generelt?.handelsbetegnelse[0] || 'Unknown',
+      color: targetVehicle.godkjenning?.tekniskGodkjenning?.tekniskeData?.karosseriOgLasteplan?.rFarge?.[0]?.kodeNavn || '',
+      firstRegisteredNorway: targetVehicle.forstegangsregistrering?.registrertForstegangNorgeDato || 'Unknown',
       isImported: !!targetVehicle.godkjenning?.forstegangsGodkjenning?.bruktimport?.importland,
       importCountry: targetVehicle.godkjenning?.forstegangsGodkjenning?.bruktimport?.importland?.landNavn || null,
       mileageAtImport: targetVehicle.godkjenning?.forstegangsGodkjenning?.bruktimport?.kilometerstand || 0,
@@ -72,7 +75,8 @@ export async function GET(request: Request) {
   }
 }
 
-// Helper function to determine if the input is a license plate or VIN.   With very old vehicles (<1985) the vin can be shorter and will not be able to be found with current logic
+// Helper function to determine if the input is a license plate or VIN.  
+// Note: With very old vehicles (<1985) the vin can be shorter and in some rare cases will not be able to be found with current logic
 function checkInput(input: string): string {
   const inputType = ['kjennemerke', 'understellsnummer'];
   if (input.length > 7) return inputType[1]; // VIN check
