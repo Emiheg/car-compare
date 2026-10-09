@@ -7,7 +7,6 @@ export default function CarView({ data }: { data: CarData | null }) {
       {data && <div>
         <h2>{data.brand} {data.model}</h2>
         {data.plate}
-        {data.color}
         
         </div>
         }

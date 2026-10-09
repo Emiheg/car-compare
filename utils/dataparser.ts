@@ -14,5 +14,3 @@ export interface CarData {
   axleConfiguration: any[];
   cachedAt: string;
 }
-
-
