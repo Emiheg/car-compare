@@ -49,7 +49,7 @@ export default function CarImageDisplay({ year, brand: brand, model}: CarImageDi
   return (
     <div className="w-full max-w-xl mx-auto">
       {/* Container wraps standard img element to enforce safe presentation layout */}
-      <div className="relative w-full h-64 rounded-md overflow-hidden border border-gray-200 shadow-sm">
+      <div className="relative w-full h-80 rounded-md overflow-hidden border border-gray-200 shadow-sm">
         <Image
           src={imageResult.imageUrl}
           alt={`${year} ${brand} ${model}`}
@@ -71,7 +71,7 @@ export default function CarImageDisplay({ year, brand: brand, model}: CarImageDi
           >
             {imageResult.artistHtml}
           </a>
-          <span className="mx-1">{imageResult.searchQuery}</span>
+          
         </span>
         <span></span>
         <span>

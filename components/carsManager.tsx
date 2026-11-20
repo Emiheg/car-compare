@@ -31,23 +31,28 @@ export default function CarsManager() {
     }
 
     return (
-        <div>
+        <div className="w-full">
+            <div className="flex flex-row gap-2 mb-4 justify-center">
             <input
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 placeholder="License plate or VIN"
             />
-            <button onClick={search}>Search</button>
+            <button  onClick={search}>Search</button>
             {error && <p style={{ color: "red" }}>{error}</p>}
+            </div>
             {carList.length > 0 && (
-                <div style={{"flexDirection": "row", "display": "flex", "gap": "10px"}}>
+                <div className="flex flex-row gap-4 justify-around w-full">
+                    
                     {carList.map((car) => (
-                        <span key={car.id}>
+                        <div key={car.id} className="relative basis-full bg-orange-50 p-2">
                             
-                                <button onClick={() => deleteCar(car.id)}>Delete</button>
-                                <CarView data={car.data} />
+                            <button className="absolute flex right-0 top-0 border-0 rounded-full w-3 h-3 p-2 text-center items-center justify-center 
+                                             bg-transparent text-xs hover:bg-red-100 transition-colors duration-100 cursor-pointer"
+                                onClick={() => deleteCar(car.id)}>x</button>
                             
-                        </span>
+                            <CarView data={car.data}/>
+                        </div>
                     ))}
                 </div>
             )}
