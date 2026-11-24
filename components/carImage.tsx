@@ -54,6 +54,7 @@ export default function CarImageDisplay({ year, brand: brand, model}: CarImageDi
           src={imageResult.imageUrl}
           alt={`${year} ${brand} ${model}`}
           fill
+          unoptimized
           sizes="(max-width: 768px) 100vw, 768px"
           className="object-cover"
         />

@@ -1,5 +1,5 @@
 import { Fragment, useRef, useState } from "react";
-import type { CarData, VehicleJsonObject, VehicleJsonValue } from "../utils/dataparser";
+import type { CarData, VehicleJsonValue } from "../utils/dataparser";
 
 interface VehicleDetailsProps {
   cars: { id: string; data: CarData }[];
@@ -10,10 +10,10 @@ interface DetailSection {
   matches: (path: string) => boolean;
 }
 
-const registrationPrefix = "registreringsdata.registrering.";
+const registrationPrefix = "registrering.";
 const initialApprovalPrefix = "godkjenning.forstegangsGodkjenning.";
 const technicalApprovalPrefix = "godkjenning.tekniskGodkjenning.";
-const technicalDataPaths = ["tekniskedata."];
+const technicalDataPaths = ["godkjenning.tekniskGodkjenning.tekniskeData."];
 const fieldColumnWidth = 256;
 const carColumnWidth = 208;
 
@@ -21,13 +21,12 @@ const detailSections: DetailSection[] = [
   {
     title: "1. Rot & Identifikasjon",
     matches: (path) =>
-      ["plate", "vin", "brand", "model", "color"].includes(path) ||
-      path.includes(".kjoretoyId."),
+      path.startsWith("kjoretoyId.") && !path.includes("kjennemerke"),
   },
   {
     title: "2. Registreringsstatus & Tidspunkter",
     matches: (path) =>
-      path.startsWith("registreringsdata.forstegangsregistrering.") ||
+      path.startsWith("forstegangsregistrering.") ||
       [
         "fomTidspunkt",
         "registrertForstegangPaEierskap",
@@ -39,7 +38,7 @@ const detailSections: DetailSection[] = [
   },
   {
     title: "3. Aktivt Kjennemerke (Skilt)",
-    matches: (path) => path.startsWith("kjennemerke[") || path.includes(".kjennemerke["),
+    matches: (path) => path === "kjoretoyId.kjennemerke" || path.startsWith("kjennemerke[") || path.includes(".kjennemerke["),
   },
   {
     title: "4. Kjøringens Art & Koder",
@@ -133,27 +132,7 @@ function flattenValue(
 
 function flattenCarData(data: CarData) {
   const values = new Map<string, string>();
-  const approvalData = data.godkjenning.tekniskGodkjenning
-    ? {
-        ...data.godkjenning,
-        tekniskGodkjenning: {
-          ...data.godkjenning.tekniskGodkjenning,
-          tekniskeData: undefined,
-        },
-      }
-    : data.godkjenning;
-  const comparableData: VehicleJsonObject = {
-    plate: data.plate,
-    vin: data.vin,
-    brand: data.brand,
-    model: data.model,
-    color: data.color,
-    tekniskedata: data.tekniskedata,
-    registreringsdata: data.registreringsdata,
-    godkjenning: approvalData,
-  };
-
-  flattenValue(comparableData, "", values);
+  flattenValue(data, "", values);
   return values;
 }
 
@@ -213,8 +192,8 @@ export default function VehicleDetails({ cars }: VehicleDetailsProps) {
                     Field
                   </th>
                   {cars.map((car, index) => (
-                    <th className="h-10 truncate px-3 py-2 font-semibold" key={car.id} scope="col" title={car.data.plate}>
-                      {car.data.plate || `Car ${index + 1}`}
+                    <th className="h-10 truncate px-3 py-2 font-semibold" key={car.id} scope="col" title={car.data.kjoretoyId?.kjennemerke}>
+                      {car.data.kjoretoyId?.kjennemerke || `Car ${index + 1}`}
                     </th>
                   ))}
                 </tr>
@@ -249,7 +228,7 @@ export default function VehicleDetails({ cars }: VehicleDetailsProps) {
                 </th>
                 {cars.map((car, index) => (
                   <th key={car.id} scope="col">
-                    {car.data.plate || `Car ${index + 1}`}
+                    {car.data.kjoretoyId?.kjennemerke || `Car ${index + 1}`}
                   </th>
                 ))}
               </tr>

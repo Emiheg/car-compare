@@ -1,30 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import CarView from "./carView";
 import VehicleDetails from "./vehicleDetails";
-import type { CarData } from "../utils/dataparser";
+import { getVehicleIdentifier, type CarData } from "../utils/dataparser";
 
-export default function CarsManager() {
+export default function CarsManager({ initialCars }: { initialCars: string[] }) {
     const [input, setInput] = useState("TSMJYB22S00146236");
     const [error, setError] = useState("");
     const [carList, setCarList] = useState<{id: string, data: CarData}[]>([]);
-    const [idcounter, setIdCounter] = useState(0);
-            
+    const idCounter = useRef(0);
+    const urlCarsProcessed = useRef(false);
+    const [urlCarsInitialized, setUrlCarsInitialized] = useState(initialCars.length === 0);
 
+    const search = useCallback(async (value: string, accumulateErrors = false) => {
+        const searchInput = value.trim();
+        if (!accumulateErrors) setError("");
 
-    async function search() {
-        setError("");
-        const response = await fetch(`/api/vehicle?input=${input}`);
-        const data = await response.json();
-        if (data.error) {
-            setError(data.error);
-        } else {
-            
-            setIdCounter((prev) => prev + 1);
-            setCarList((prev) => [...prev, {id: idcounter.toString(), data: data.data}]);
+        try {
+            const response = await fetch(`/api/vehicle?input=${encodeURIComponent(searchInput)}`);
+            const data = await response.json();
+            if (!response.ok || data.error) {
+                const message = data.error || "Vehicle search failed";
+                setError((previous) => accumulateErrors && previous
+                    ? `${previous}; ${searchInput}: ${message}`
+                    : `${searchInput}: ${message}`);
+            } else {
+                setCarList((prev) => [...prev, {id: (idCounter.current++).toString(), data: data.data}]);
+            }
+        } catch (searchError) {
+            const message = searchError instanceof Error ? searchError.message : "Vehicle search failed";
+            setError((previous) => accumulateErrors && previous
+                ? `${previous}; ${searchInput}: ${message}`
+                : `${searchInput}: ${message}`);
         }
-    }
+    }, []);
+
+    useEffect(() => {
+        if (urlCarsProcessed.current) return;
+        urlCarsProcessed.current = true;
+        if (initialCars.length === 0) return;
+
+        async function addUrlCars() {
+            for (const car of initialCars) {
+                await search(car, true);
+            }
+            setUrlCarsInitialized(true);
+        }
+
+        void addUrlCars();
+    }, [initialCars, search]);
+
+    useEffect(() => {
+        if (!urlCarsInitialized) return;
+
+        const url = new URL(window.location.href);
+        const existingCars = url.searchParams.getAll("cars");
+        if (carList.length === 0) {
+            if (existingCars.length === 0) return;
+            url.searchParams.delete("cars");
+        } else {
+            const cars = carList.map(({ data }) => getVehicleIdentifier(data));
+            url.searchParams.set("cars", cars.join(","));
+        }
+
+        window.history.replaceState(window.history.state, "", url);
+    }, [carList, urlCarsInitialized]);
 
     function deleteCar(id: string) {
         setCarList((prev) => prev.filter((car) => car.id !== id));
@@ -38,24 +79,10 @@ export default function CarsManager() {
                 onChange={(event) => setInput(event.target.value)}
                 placeholder="License plate or VIN"
             />
-            <button  onClick={search}>Search</button>
+            <button onClick={() => search(input)}>Search</button>
             {error && <p style={{ color: "red" }}>{error}</p>}
             </div>
-            {carList.length > 0 && (
-                <div className="flex flex-row gap-4 justify-around w-full">
-                    
-                    {carList.map((car) => (
-                        <div key={car.id} className="relative basis-full bg-orange-50 p-2">
-                            
-                            <button className="absolute flex right-0 top-0 border-0 rounded-full w-3 h-3 p-2 text-center items-center justify-center 
-                                             bg-transparent text-xs hover:bg-red-100 transition-colors duration-100 cursor-pointer"
-                                onClick={() => deleteCar(car.id)}>x</button>
-                            
-                            <CarView data={car.data}/>
-                        </div>
-                    ))}
-                </div>
-            )}
+            {carList.length > 0 && <CarView cars={carList} onDelete={deleteCar} />}
             <VehicleDetails cars={carList} />
             <div>
             </div>

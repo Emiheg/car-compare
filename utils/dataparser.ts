@@ -49,23 +49,6 @@ export interface VehicleTechnicalData extends VehicleJsonObject {
   vekter?: VehicleJsonObject;
 }
 
-export interface VehicleRegistrationData extends VehicleJsonObject {
-  forstegangsregistrering: VehicleJsonObject & {
-    registrertForstegangNorgeDato?: string;
-  };
-  registrering: VehicleJsonObject & {
-    avregistrertSidenDato?: string;
-    fomTidspunkt?: string;
-    kjoringensArt?: VehicleCodeValue;
-    neringskode?: string;
-    neringskodeBeskrivelse?: string;
-    registreringsstatus?: VehicleCodeValue;
-    registrertForstegangPaEierskap?: string;
-    tilTidspunkt?: string;
-    vektarsavgiftOppgittGrunnlag?: VehicleJsonObject;
-  };
-}
-
 export interface VehicleApprovalData extends VehicleJsonObject {
   forstegangsGodkjenning?: VehicleJsonObject & {
     bruktimport?: VehicleJsonObject & {
@@ -102,14 +85,45 @@ export interface VehicleApprovalData extends VehicleJsonObject {
   tilleggsgodkjenninger?: VehicleJsonObject[];
 }
 
-export interface CarData {
-  plate: string;
-  vin: string;
-  brand: string;
-  model: string;
-  color: string;
-  tekniskedata: VehicleTechnicalData;
-  registreringsdata: VehicleRegistrationData;
-  godkjenning: VehicleApprovalData;
-  cachedAt: string;
+export interface CarData extends VehicleJsonObject {
+  kjoretoyId?: VehicleJsonObject & {
+    kjennemerke?: string;
+    understellsnummer?: string;
+  };
+  forstegangsregistrering?: VehicleJsonObject & {
+    registrertForstegangNorgeDato?: string;
+  };
+  registrering?: VehicleJsonObject & {
+    avregistrertSidenDato?: string;
+    fomTidspunkt?: string;
+    kjoringensArt?: VehicleCodeValue;
+    neringskode?: string;
+    neringskodeBeskrivelse?: string;
+    registreringsstatus?: VehicleCodeValue;
+    registrertForstegangPaEierskap?: string;
+    tilTidspunkt?: string;
+    vektarsavgiftOppgittGrunnlag?: VehicleJsonObject;
+  };
+  periodiskKjoretoykontroll?: VehicleJsonObject & {
+    kontrollfrist?: Date;
+    sistGodkjent?: Date;
+  };
+  godkjenning?: VehicleApprovalData;
+}
+
+export function getVehicleDisplayData(data: CarData) {
+  const technicalData = data.godkjenning?.tekniskGodkjenning?.tekniskeData;
+
+  return {
+    plate: data.kjoretoyId?.kjennemerke || "Unknown",
+    vin: data.kjoretoyId?.understellsnummer || "Unknown",
+    brand: technicalData?.generelt?.merke?.[0]?.merke || "Unknown",
+    model: technicalData?.generelt?.handelsbetegnelse?.[0] || "Unknown",
+    color: technicalData?.karosseriOgLasteplan?.rFarge?.[0]?.kodeNavn || "",
+  };
+}
+
+export function getVehicleIdentifier(data: CarData) {
+  const { plate, vin } = getVehicleDisplayData(data);
+  return vin !== "Unknown" ? vin : plate;
 }

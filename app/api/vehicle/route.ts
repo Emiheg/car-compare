@@ -16,7 +16,7 @@ export async function GET(request: Request) {
 
     if (carSnapshot.exists()) {
       const cachedCar = carSnapshot.data();
-      if (cachedCar.tekniskedata && cachedCar.registreringsdata && cachedCar.godkjenning) {
+      if (cachedCar.kjoretoyId) {
         console.log(`Cache data retrieved from Firestore for: ${input}`);
         return NextResponse.json({ source: 'cache', data: cachedCar });
       }
@@ -46,30 +46,13 @@ export async function GET(request: Request) {
     }
 
     // Safely target the first vehicle object inside the array list
-    const targetVehicle = rawSvvData.kjoretoydataListe[0];
+    const targetVehicleData = rawSvvData.kjoretoydataListe[0];
 
-    // Restructure the response while retaining complete nested data sections
-    const technicalData = targetVehicle.godkjenning?.tekniskGodkjenning?.tekniskeData ?? {};
-    const structuredCarData = {
-      plate: targetVehicle.kjoretoyId?.kjennemerke || 'Unknown',
-      vin: targetVehicle.kjoretoyId?.understellsnummer || 'Unknown',
-      brand: technicalData.generelt?.merke?.[0]?.merke || 'Unknown',
-      model: technicalData.generelt?.handelsbetegnelse?.[0] || 'Unknown',
-      color: technicalData.karosseriOgLasteplan?.rFarge?.[0]?.kodeNavn || '',
-      tekniskedata: technicalData,
-      registreringsdata: {
-        forstegangsregistrering: targetVehicle.forstegangsregistrering ?? {},
-        registrering: targetVehicle.registrering ?? {},
-      },
-      godkjenning: targetVehicle.godkjenning ?? {},
-      cachedAt: new Date().toISOString()
-    };
-
-    // Committing the clean object directly into Cloud Firestore database cache
-    await setDoc(carDocRef, structuredCarData);
+    // Cache the complete SVV vehicle record without reshaping it.
+    await setDoc(carDocRef, targetVehicleData);
     console.log(`Successfully cached vehicle metrics to Cloud Firestore for: ${input}`);
 
-    return NextResponse.json({ source: 'api', data: structuredCarData });
+    return NextResponse.json({ source: 'api', data: targetVehicleData });
 
   } catch (error: unknown) {
     console.error('API Pipeline Failure:', error);
